@@ -1,95 +1,88 @@
 import os
-import logging
-from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
-from mega_handler import MegaHandler
-from dotenv import load_dotenv
+from pyrogram import Client, filters
+from mega import Mega
 
-# Load environment variables
-load_dotenv()
+# Initialize Mega instance
+mega = Mega()
 
-# Enable logging
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+# Create Pyrogram client
+app = Client(
+    "mega_rename_bot",
+    api_id=os.getenv("20202379"),
+    api_hash=os.getenv("cb1d30a2facf3a1d5691fe3dbe8e8482"),
+    bot_token=os.getenv("BOT_TOKEN")
 )
-logger = logging.getLogger(__name__)
 
-# Store user sessions
-user_sessions = {}
+# Dictionary to store user sessions
+temp_sessions = {}
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a message when the command /start is issued."""
-    await update.message.reply_text(
-        "👋 Welcome to Mega Rename Bot!\n\n"
-        "Use /login email password to connect your Mega account.\n"
-        "After logging in, use /rename to start the renaming process."
-    )
+@app.on_message(filters.command("start") & filters.private)
+def start(client, message):
+    message.reply_text("""
+Welcome to the Mega Rename Bot! 🎉
 
-async def login(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle the login command."""
-    if len(context.args) != 2:
-        await update.message.reply_text(
-            "❌ Please provide both email and password.\n"
-            "Usage: /login email password"
-        )
+Commands:
+/login - Log in to your Mega account
+/rename - Rename files in your Mega account
+/logout - Log out from your session
+""")
+
+@app.on_message(filters.command("login") & filters.private)
+def login(client, message):
+    message.reply_text("Please send your Mega email and password in the following format:\n`email password`")
+
+@app.on_message(filters.text & filters.private)
+def handle_login(client, message):
+    if "@" in message.text and len(message.text.split()) == 2:
+        email, password = message.text.split()
+        try:
+            user = mega.login(email, password)
+            temp_sessions[message.chat.id] = user
+            message.reply_text("Login successful! Use /rename to rename files.")
+        except Exception as e:
+            message.reply_text(f"Login failed: {e}")
+
+@app.on_message(filters.command("rename") & filters.private)
+def rename_files(client, message):
+    user = temp_sessions.get(message.chat.id)
+    if not user:
+        message.reply_text("You are not logged in! Use /login to log in first.")
         return
 
-    email, password = context.args
-    
-    try:
-        mega_handler = MegaHandler(email, password)
-        user_sessions[update.effective_user.id] = mega_handler
-        await update.message.reply_text(
-            "✅ Successfully logged in to Mega!\n"
-            "Use /rename to start renaming your files."
-        )
-    except Exception as e:
-        await update.message.reply_text(f"❌ Login failed: {str(e)}")
+    message.reply_text("Send the rename pattern as: \n`old_pattern new_pattern`")
 
-async def rename(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Start the rename process."""
-    user_id = update.effective_user.id
-    if user_id not in user_sessions:
-        await update.message.reply_text(
-            "❌ Please login first using /login email password"
-        )
+@app.on_message(filters.text & filters.private)
+def handle_rename(client, message):
+    user = temp_sessions.get(message.chat.id)
+    if not user:
+        message.reply_text("You are not logged in! Use /login to log in first.")
         return
 
-    mega_handler = user_sessions[user_id]
-    try:
-        await update.message.reply_text("🔄 Starting rename process...")
-        result = mega_handler.rename_all_files()
-        await update.message.reply_text(f"✅ Rename complete!\n\n{result}")
-    except Exception as e:
-        await update.message.reply_text(f"❌ Error during rename: {str(e)}")
+    if len(message.text.split()) == 2:
+        old_pattern, new_pattern = message.text.split()
+        try:
+            files = user.get_files()
+            renamed_files = []
+            for file_id, file_data in files.items():
+                if old_pattern in file_data['name']:
+                    new_name = file_data['name'].replace(old_pattern, new_pattern)
+                    user.rename(file_id, new_name)
+                    renamed_files.append(new_name)
 
-async def logout(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle the logout command."""
-    user_id = update.effective_user.id
-    if user_id in user_sessions:
-        del user_sessions[user_id]
-        await update.message.reply_text("👋 Successfully logged out!")
+            if renamed_files:
+                message.reply_text(f"Renamed files: \n\n" + "\n".join(renamed_files))
+            else:
+                message.reply_text("No files matched the pattern.")
+        except Exception as e:
+            message.reply_text(f"Error during renaming: {e}")
+
+@app.on_message(filters.command("logout") & filters.private)
+def logout(client, message):
+    if message.chat.id in temp_sessions:
+        del temp_sessions[message.chat.id]
+        message.reply_text("Logged out successfully!")
     else:
-        await update.message.reply_text("❌ You're not logged in!")
+        message.reply_text("You are not logged in.")
 
-def main() -> None:
-    """Start the bot."""
-    # Get bot token from environment variable
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if not token:
-        logger.error("No bot token provided!")
-        return
-
-    application = Application.builder().token(token).build()
-
-    # Add command handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("login", login))
-    application.add_handler(CommandHandler("rename", rename))
-    application.add_handler(CommandHandler("logout", logout))
-
-    # Start the bot
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
-
-if __name__ == "__main__":
-    main()
+# Run the bot
+app.run()
