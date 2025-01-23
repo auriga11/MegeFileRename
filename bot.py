@@ -10,7 +10,7 @@ app = Client(
     "mega_rename_bot",
     api_id=os.getenv("20202379"),
     api_hash=os.getenv("cb1d30a2facf3a1d5691fe3dbe8e8482"),
-    bot_token=os.getenv("BOT_TOKEN")
+    bot_token=os.getenv("8193152124:AAHqYTYNvtSdKML6vTw5S126koR26yoUQx0")
 )
 
 # Dictionary to store user sessions
