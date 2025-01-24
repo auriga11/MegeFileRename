@@ -24,7 +24,7 @@ app = Client(
     "mega_rename_bot",
     api_id=TELEGRAM_API,
     api_hash=TELEGRAM_HASH,
-    bot_token=BOT_TOKEN)
+    bot_token=BOT_TOKEN
 ).start()
 
 temp_sessions = {}
