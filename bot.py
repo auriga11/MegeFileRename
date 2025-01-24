@@ -17,15 +17,17 @@ app = Client(
 temp_sessions = {}
 
 @app.on_message(filters.command("start") & filters.private)
-def start(client, message):
-    message.reply_text("""
+async def start(client, message):
+    welcome_message = """
 Welcome to the Mega Rename Bot! 🎉
 
 Commands:
 /login - Log in to your Mega account
 /rename - Rename files in your Mega account
 /logout - Log out from your session
-""")
+"""
+    await client.send_message(chat_id=message.chat.id, text=text, reply_to_message_id=message.id)
+    
 
 @app.on_message(filters.command("login") & filters.private)
 def login(client, message):
@@ -38,15 +40,15 @@ def handle_login(client, message):
         try:
             user = mega.login(email, password)
             temp_sessions[message.chat.id] = user
-            message.reply_text("Login successful! Use /rename to rename files.")
+            await message.reply_text("Login successful! Use /rename to rename files.")
         except Exception as e:
-            message.reply_text(f"Login failed: {e}")
+            await message.reply_text(f"Login failed: {e}")
 
 @app.on_message(filters.command("rename") & filters.private)
 def rename_files(client, message):
-    user = temp_sessions.get(message.chat.id)
+    user = temp_sessions.get(message.from_user.id)
     if not user:
-        message.reply_text("You are not logged in! Use /login to log in first.")
+        await message.reply_text("You are not logged in! Use /login to log in first.")
         return
 
     message.reply_text("Send the rename pattern as: \n`old_pattern new_pattern`")
