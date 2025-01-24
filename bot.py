@@ -1,7 +1,6 @@
 import os
 from pyrogram import Client, filters
 from mega import Mega
-from logging import info as log_info
 from logging import getLogger, ERROR,Formatter, FileHandler, StreamHandler, INFO, basicConfig, error as log_error, info as log_info, warning as log_warning
 from uvloop import install
 
@@ -11,7 +10,7 @@ TELEGRAM_API = 20202379
 TELEGRAM_HASH = "cb1d30a2facf3a1d5691fe3dbe8e8482"
 
 install()
-
+basicConfig(level=INFO)
 getLogger("pyrogram").setLevel(ERROR)
 LOGGER = getLogger(__name__)
 
