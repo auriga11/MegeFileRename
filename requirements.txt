@@ -1,3 +1,5 @@
+flask
+gunicorn
 mega.py==1.0.8
 pyrogram==2.0.106
 python-dotenv==1.0.0
