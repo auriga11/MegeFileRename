@@ -94,5 +94,5 @@ async def logout(client, message):
     else:
         await sendMessage(client, message,"You are not logged in.")
 
-log_info(f"Bot Started : {app.me.usename}"
+log_info(f"Bot Started : {app.me.usename}")
          
