@@ -1,17 +1,19 @@
 import os
 from pyrogram import Client, filters
 from mega import Mega
+from logging import info as log_info
 
 # Initialize Mega instance
+log_info("Starting Mega instance")
 mega = Mega()
 
-# Create Pyrogram client
+log_info("Creating Client from Bot Token")
 app = Client(
     "mega_rename_bot",
     api_id=os.getenv("20202379"),
     api_hash=os.getenv("cb1d30a2facf3a1d5691fe3dbe8e8482"),
     bot_token=os.getenv("8193152124:AAHqYTYNvtSdKML6vTw5S126koR26yoUQx0")
-)
+).start()
 
 temp_sessions = {}
 
@@ -92,4 +94,5 @@ async def logout(client, message):
     else:
         await sendMessage(client, message,"You are not logged in.")
 
-app.run()
+log_info(f"Bot Started : {app.me.usename}"
+         
