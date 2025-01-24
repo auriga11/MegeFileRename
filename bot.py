@@ -59,24 +59,28 @@ async def handle_login(client, message):
         try:
             user = mega.login(email, password)
             temp_sessions[message.from_user.id] = user
-            await sendMessage(client, message, "Login successful! Use /rename to rename files.")
+            text = "Login successful! Use /rename to rename files."
+            await sendMessage(client, message, text)
         except Exception as e:
-            await sendMessage(client, message, f"Login failed: {e}")
+            text = f"Login failed: {e}"
+            await sendMessage(client, message, text)
 
 @app.on_message(filters.command("rename") & filters.private)
 async def rename_files(client, message):
     user = temp_sessions.get(message.from_user.id)
     if not user:
-        await sendMessage(client, message,"You are not logged in! Use /login to log in first.")
+        text = "You are not logged in! Use /login to log in first."
+        await sendMessage(client, message, text)
         return
-
-    await sendMessage(client, message,"Send the rename pattern as: \n`old_pattern new_pattern`")
+    text = "Send the rename pattern as: \n`old_pattern new_pattern`"
+    await sendMessage(client, message, text)
 
 @app.on_message(filters.text & filters.private)
 async def handle_rename(client, message):
     user = temp_sessions.get(message.from_user.id)
     if not user:
-        await sendMessage(client, message, "You are not logged in! Use /login to log in first.")
+        not_text = "You are not logged in! Use /login to log in first."
+        await sendMessage(client, message, not_text)
         return
 
     if len(message.text.split()) == 2:
@@ -91,19 +95,24 @@ async def handle_rename(client, message):
                     renamed_files.append(new_name)
 
             if renamed_files:
-                await sendMessage(client, message,f"Renamed files: \n\n" + "\n".join(renamed_files))
+                rename_text = f"Renamed files: \n\n" + "\n".join(renamed_files)
+                await sendMessage(client, message,rename_text)
             else:
-                await sendMessage(client, message, "No files matched the pattern.")
+                no_rename_text = "No files matched the pattern."
+                await sendMessage(client, message, no_rename_text)
         except Exception as e:
-            await sendMessage(client, message,f"Error during renaming: {e}")
+            e_text = f"Error during renaming: {e}"
+            await sendMessage(client, message,e_text)
 
 @app.on_message(filters.command("logout") & filters.private)
 async def logout(client, message):
     if message.from_user.id in temp_sessions:
         del temp_sessions[message.from_user.id]
-        await sendMessage(client, message,"Logged out successfully!")
+        text = "Logged out successfully!"
+        await sendMessage(client, message,text)
     else:
-        await sendMessage(client, message,"You are not logged in.")
+        text = "You are not logged in."
+        await sendMessage(client, message,text)
 
 log_info(f"Bot Started : {app.me.username}")
 
