@@ -13,8 +13,14 @@ app = Client(
     bot_token=os.getenv("8193152124:AAHqYTYNvtSdKML6vTw5S126koR26yoUQx0")
 )
 
-# Dictionary to store user sessions
 temp_sessions = {}
+
+async def sendMessage(client, message, text):
+    return await client.send_message(
+        chat_id=message.chat.id,
+        text=text,
+        reply_to_message_id=message.id
+    )
 
 @app.on_message(filters.command("start") & filters.private)
 async def start(client, message):
@@ -26,38 +32,38 @@ Commands:
 /rename - Rename files in your Mega account
 /logout - Log out from your session
 """
-    await client.send_message(chat_id=message.chat.id, text=text, reply_to_message_id=message.id)
-    
+    await sendMessage(client, message, welcome_message)
 
 @app.on_message(filters.command("login") & filters.private)
-def login(client, message):
-    message.reply_text("Please send your Mega email and password in the following format:\n`email password`")
+async def login(client, message):
+    text = "Please send your Mega email and password in the following format:\n`email password`"
+    await sendMessage(client, message, text)
 
 @app.on_message(filters.text & filters.private)
-def handle_login(client, message):
+async def handle_login(client, message):
     if "@" in message.text and len(message.text.split()) == 2:
         email, password = message.text.split()
         try:
             user = mega.login(email, password)
-            temp_sessions[message.chat.id] = user
-            await message.reply_text("Login successful! Use /rename to rename files.")
+            temp_sessions[message.from_user.id] = user
+            await sendMessage(client, message, "Login successful! Use /rename to rename files.")
         except Exception as e:
-            await message.reply_text(f"Login failed: {e}")
+            await sendMessage(client, message, f"Login failed: {e}")
 
 @app.on_message(filters.command("rename") & filters.private)
-def rename_files(client, message):
+async def rename_files(client, message):
     user = temp_sessions.get(message.from_user.id)
     if not user:
-        await message.reply_text("You are not logged in! Use /login to log in first.")
+        await sendMessage(client, message,"You are not logged in! Use /login to log in first.")
         return
 
-    message.reply_text("Send the rename pattern as: \n`old_pattern new_pattern`")
+    await sendMessage(client, message,"Send the rename pattern as: \n`old_pattern new_pattern`")
 
 @app.on_message(filters.text & filters.private)
-def handle_rename(client, message):
-    user = temp_sessions.get(message.chat.id)
+async def handle_rename(client, message):
+    user = temp_sessions.get(message.from_user.id)
     if not user:
-        message.reply_text("You are not logged in! Use /login to log in first.")
+        await sendMessage(client, message, "You are not logged in! Use /login to log in first.")
         return
 
     if len(message.text.split()) == 2:
@@ -72,19 +78,18 @@ def handle_rename(client, message):
                     renamed_files.append(new_name)
 
             if renamed_files:
-                message.reply_text(f"Renamed files: \n\n" + "\n".join(renamed_files))
+                await sendMessage(client, message,f"Renamed files: \n\n" + "\n".join(renamed_files))
             else:
-                message.reply_text("No files matched the pattern.")
+                await sendMessage(client, message, "No files matched the pattern.")
         except Exception as e:
-            message.reply_text(f"Error during renaming: {e}")
+            await sendMessage(client, message,f"Error during renaming: {e}")
 
 @app.on_message(filters.command("logout") & filters.private)
-def logout(client, message):
-    if message.chat.id in temp_sessions:
-        del temp_sessions[message.chat.id]
-        message.reply_text("Logged out successfully!")
+async def logout(client, message):
+    if message.from_user.id in temp_sessions:
+        del temp_sessions[message.from_user.id]
+        await sendMessage(client, message,"Logged out successfully!")
     else:
-        message.reply_text("You are not logged in.")
+        await sendMessage(client, message,"You are not logged in.")
 
-# Run the bot
 app.run()
