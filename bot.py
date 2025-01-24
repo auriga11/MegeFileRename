@@ -46,13 +46,9 @@ Commands:
 
 @app.on_message(filters.command("login") & filters.private)
 async def login(client, message):
-    text = "Please send your Mega email and password in the following format:\n`email password`"
-    await sendMessage(client, message, text)
-
-@app.on_message(filters.text & filters.private)
-async def handle_login(client, message):
-    if "@" in message.text and len(message.text.split()) == 2:
-        email, password = message.text.split()
+    if len(message.text.split()) == 3:
+        arg = message.text.split()
+        email, password = arg[1], arg[2]
         try:
             log_info(f"Starting Mega instance for {message.from_user.id}")
             mega_session[message.from_user.id] = Mega().login(email, password)
@@ -61,46 +57,44 @@ async def handle_login(client, message):
         except Exception as e:
             text = f"Login failed: {e}"
             await sendMessage(client, message, text)
+    
+    else:
+        text = "Please send your Mega email and password in the following format:\n`email password`"
+        await sendMessage(client, message, text)
 
 @app.on_message(filters.command("rename") & filters.private)
 async def rename_files(client, message):
-    user = mega_session.get(message.from_user.id)
-    if not user:
-        text = "You are not logged in! Use /login to log in first."
+    if len(message.text.split()) > 1:
+        user = mega_session.get(message.from_user.id)
+        if not user:
+            text = "You are not logged in! Use /login to log in first."
+            return await sendMessage(client, message, text)
+        
+        user = mega_session.get(message.from_user.id)   
+        if len(message.text.split()) == 2:
+            old_pattern, new_pattern = message.text.split()
+            try:
+                files = user.get_files()
+                renamed_files = []
+                for file_id, file_data in files.items():
+                    if old_pattern in file_data['name']:
+                        new_name = file_data['name'].replace(old_pattern, new_pattern)
+                        user.rename(file_id, new_name)
+                        renamed_files.append(new_name)
+
+                if renamed_files:
+                    rename_text = f"Renamed files: \n\n" + "\n".join(renamed_files)
+                    await sendMessage(client, message,rename_text)
+                else:
+                    no_rename_text = "No files matched the pattern."
+                    await sendMessage(client, message, no_rename_text)
+            except Exception as e:
+                e_text = f"Error during renaming: {e}"
+                await sendMessage(client, message,e_text)
+    else:
+        text = "Send the rename pattern as: \n`old_pattern new_pattern`"
         await sendMessage(client, message, text)
-        return
-    text = "Send the rename pattern as: \n`old_pattern new_pattern`"
-    await sendMessage(client, message, text)
-
-@app.on_message(filters.text & filters.private)
-async def handle_rename(client, message):
-    user = mega_session.get(message.from_user.id)
-    if not user:
-        not_text = "You are not logged in! Use /login to log in first."
-        await sendMessage(client, message, not_text)
-        return
-
-    if len(message.text.split()) == 2:
-        old_pattern, new_pattern = message.text.split()
-        try:
-            files = user.get_files()
-            renamed_files = []
-            for file_id, file_data in files.items():
-                if old_pattern in file_data['name']:
-                    new_name = file_data['name'].replace(old_pattern, new_pattern)
-                    user.rename(file_id, new_name)
-                    renamed_files.append(new_name)
-
-            if renamed_files:
-                rename_text = f"Renamed files: \n\n" + "\n".join(renamed_files)
-                await sendMessage(client, message,rename_text)
-            else:
-                no_rename_text = "No files matched the pattern."
-                await sendMessage(client, message, no_rename_text)
-        except Exception as e:
-            e_text = f"Error during renaming: {e}"
-            await sendMessage(client, message,e_text)
-
+    
 @app.on_message(filters.command("logout") & filters.private)
 async def logout(client, message):
     if message.from_user.id in mega_session:
