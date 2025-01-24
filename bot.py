@@ -71,8 +71,8 @@ async def rename_files(client, message):
             return await sendMessage(client, message, text)
         
         user = mega_session.get(message.from_user.id)   
-        if len(message.text.split()) == 2:
-            old_pattern, new_pattern = message.text.split()
+        if len(message.text.split()) == 3:
+            old_pattern, new_pattern = message.text.split()[1], message.text.split()[2]
             try:
                 files = user.get_files()
                 renamed_files = []
