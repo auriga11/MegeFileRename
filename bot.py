@@ -14,9 +14,6 @@ basicConfig(level=INFO)
 getLogger("pyrogram").setLevel(ERROR)
 LOGGER = getLogger(__name__)
 
-# Initialize Mega instance
-log_info("Starting Mega instance")
-mega = Mega()
 
 log_info("Creating Client from Bot Token")
 app = Client(
@@ -26,7 +23,7 @@ app = Client(
     bot_token=BOT_TOKEN
 ).start()
 
-temp_sessions = {}
+mega_session = {}
 
 async def sendMessage(client, message, text):
     return await client.send_message(
@@ -57,8 +54,8 @@ async def handle_login(client, message):
     if "@" in message.text and len(message.text.split()) == 2:
         email, password = message.text.split()
         try:
-            user = mega.login(email, password)
-            temp_sessions[message.from_user.id] = user
+            log_info(f"Starting Mega instance for {message.from_user.id}")
+            mega_session[message.from_user.id] = Mega().login(email, password)
             text = "Login successful! Use /rename to rename files."
             await sendMessage(client, message, text)
         except Exception as e:
@@ -67,7 +64,7 @@ async def handle_login(client, message):
 
 @app.on_message(filters.command("rename") & filters.private)
 async def rename_files(client, message):
-    user = temp_sessions.get(message.from_user.id)
+    user = mega_session.get(message.from_user.id)
     if not user:
         text = "You are not logged in! Use /login to log in first."
         await sendMessage(client, message, text)
@@ -77,7 +74,7 @@ async def rename_files(client, message):
 
 @app.on_message(filters.text & filters.private)
 async def handle_rename(client, message):
-    user = temp_sessions.get(message.from_user.id)
+    user = mega_session.get(message.from_user.id)
     if not user:
         not_text = "You are not logged in! Use /login to log in first."
         await sendMessage(client, message, not_text)
@@ -106,8 +103,8 @@ async def handle_rename(client, message):
 
 @app.on_message(filters.command("logout") & filters.private)
 async def logout(client, message):
-    if message.from_user.id in temp_sessions:
-        del temp_sessions[message.from_user.id]
+    if message.from_user.id in mega_session:
+        del mega_session[message.from_user.id]
         text = "Logged out successfully!"
         await sendMessage(client, message,text)
     else:
