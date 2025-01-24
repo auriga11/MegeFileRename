@@ -107,5 +107,5 @@ async def logout(client, message):
         await sendMessage(client, message,"You are not logged in.")
 
 log_info(f"Bot Started : {app.me.username}")
-app.loop.run_until_complete()
+
 app.loop.run_forever()
