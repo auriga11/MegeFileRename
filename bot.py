@@ -2,6 +2,9 @@ import os
 from pyrogram import Client, filters
 from mega import Mega
 from logging import info as log_info
+from uvloop import install
+
+install()
 
 # Initialize Mega instance
 log_info("Starting Mega instance")
