@@ -1,5 +1,6 @@
 mega.py==1.0.8
 pyrogram==2.0.106
-TgCrypto
 python-dotenv==1.0.0
+TgCrypto
+tenacity==8.2.2
 uvloop
