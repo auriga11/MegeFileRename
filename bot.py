@@ -2,9 +2,18 @@ import os
 from pyrogram import Client, filters
 from mega import Mega
 from logging import info as log_info
+from logging import getLogger, ERROR,Formatter, FileHandler, StreamHandler, INFO, basicConfig, error as log_error, info as log_info, warning as log_warning
 from uvloop import install
 
+
+BOT_TOKEN = "8193152124:AAHqYTYNvtSdKML6vTw5S126koR26yoUQx0"
+TELEGRAM_API = 20202379
+TELEGRAM_HASH = "cb1d30a2facf3a1d5691fe3dbe8e8482"
+
 install()
+
+getLogger("pyrogram").setLevel(ERROR)
+LOGGER = getLogger(__name__)
 
 # Initialize Mega instance
 log_info("Starting Mega instance")
@@ -13,9 +22,9 @@ mega = Mega()
 log_info("Creating Client from Bot Token")
 app = Client(
     "mega_rename_bot",
-    api_id=os.getenv("20202379"),
-    api_hash=os.getenv("cb1d30a2facf3a1d5691fe3dbe8e8482"),
-    bot_token=os.getenv("8193152124:AAHqYTYNvtSdKML6vTw5S126koR26yoUQx0")
+    api_id=TELEGRAM_API,
+    api_hash=TELEGRAM_HASH,
+    bot_token=BOT_TOKEN)
 ).start()
 
 temp_sessions = {}
