@@ -4,7 +4,7 @@ from mega import Mega
 from concurrent.futures import ThreadPoolExecutor
 from logging import getLogger, ERROR,Formatter, FileHandler, StreamHandler, INFO, basicConfig, error as log_error, info as log_info, warning as log_warning
 from uvloop import install
-from asyncio import sleep as asleep
+from asyncio import sleep as asleep, gather
 
 
 BOT_TOKEN = "8193152124:AAHqYTYNvtSdKML6vTw5S126koR26yoUQx0"
