@@ -7,7 +7,7 @@ from uvloop import install
 from asyncio import sleep as asleep, gather
 
 
-BOT_TOKEN = "8193152124:AAHqYTYNvtSdKML6vTw5S126koR26yoUQx0"
+BOT_TOKEN = "7687626493:AAHiRhhF1QrLe0p5VIdQPPogiYiO828m98A"
 TELEGRAM_API = 20202379
 TELEGRAM_HASH = "cb1d30a2facf3a1d5691fe3dbe8e8482"
 
